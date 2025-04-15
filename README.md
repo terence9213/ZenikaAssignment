@@ -55,6 +55,8 @@ A possible mitigation would be to implement an ID tracking table that increments
 
 The antd toast message doesn't seem to be working for this project for some reason.
 
+You may notice a WeatherforecastController, which was created by the ASP web api template. (It can be ignored)
+
 ## Conclusion
 Many of these frameworks were new to me, so hopefully I was able to implement the best practices.
 
