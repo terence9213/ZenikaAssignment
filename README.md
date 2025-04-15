@@ -46,11 +46,13 @@ When creating a new Cafe or Employee, an api is used to get the next ID.
 
 This function looks for the Max value of the ID column, parses the numerical part, and increments it by 1.
 
-A problem occurs because employment history is persistent .
+A problem occurs because employment history is persistent.
 
 So deleting the top-most row of a table, means that the next row created will take on the same ID.
 
 A possible mitigation would be to implement an ID tracking table that increments everytime a new row is created.
+
+Or slimply using a database table with an auto-increment column.
 
 
 The antd toast message doesn't seem to be working for this project for some reason.
