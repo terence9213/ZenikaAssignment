@@ -24,7 +24,7 @@ The react app can be run with "npm run dev".
 
 (the project has not been tested for production due to time constraints)
 
-### Considerations
+## Considerations
 CORS issues were encountered but mostly mitigated by adding a policy to allow origin "http://localhost:5173"
 
 And also using only GET or POST methods .
@@ -36,7 +36,7 @@ It would have been sufficient to have the Employee table store a CafeID and Star
 
 The overcomplication resulted in a slightly different way of managing employments than was requested in the assignment.
 
-### Known Issues
+## Known Issues
 When creating a new Cafe or Employee, an api is used to get the next ID.
 
 This function looks for the Max value of the ID column, parses the numerical part, and increments it by 1.
