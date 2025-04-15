@@ -6,6 +6,7 @@ namespace CafeApp.Models
     {
         // UIXXXXXXX
         // UI0000001
+        // UI1234567
         [Column("ID")]
         public string Id { get; set; }
 

@@ -17,6 +17,8 @@ namespace CafeApp.Models
         public int NumDaysWorked { get; set; }
 
         public string? Cafe { get; set; } 
+
+        public string? CafeId { get; set; }
     }
 }
 

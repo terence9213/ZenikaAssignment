@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using System.Text.RegularExpressions;
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Cors;
 
 namespace CafeApp.Controllers
 {
@@ -19,14 +20,73 @@ namespace CafeApp.Controllers
             _context = context;
         }
 
+        // GET: NextCafeId
+        [EnableCors("Policy1")]
+        [HttpGet(Name = "GetNextCafeId")]
+        public async Task<ActionResult<string>> GetNextCafeId()
+        {
+            var query = FormattableStringFactory.Create(@"SELECT MAX(ID) FROM Cafes;");
+            var result = await _context.Database.SqlQuery<string>(query).ToListAsync();
+            string topId = result.First();
+            string topIdNumString = topId.Substring(2);
+            try
+            {
+                int topIdNum = Int32.Parse(topIdNumString);
+                int newIdNum = topIdNum + 1;
+                string newIdString = newIdNum.ToString();
+                int leadingZeros = 7 - newIdString.Length;
+                for(int i = 0; i < leadingZeros; i++)
+                {
+                    newIdString = "0" + newIdString;
+                }
+                newIdString = "UI" + newIdString;
+                return Ok(newIdString);
+            }
+            catch (FormatException e) 
+            {
+                return BadRequest();
+            }
+        }
+
+        // GET: NextEmployeeId
+        [EnableCors("Policy1")]
+        [HttpGet(Name = "GetNextEmployeeId")]
+        public async Task<ActionResult<string>> GetNextEmployeeId()
+        {
+            var query = FormattableStringFactory.Create(@"SELECT MAX(ID) FROM Employees;");
+            var result = await _context.Database.SqlQuery<string>(query).ToListAsync();
+            string topId = result.First();
+            string topIdNumString = topId.Substring(2);
+            try
+            {
+                int topIdNum = Int32.Parse(topIdNumString);
+                int newIdNum = topIdNum + 1;
+                string newIdString = newIdNum.ToString();
+                int leadingZeros = 7 - newIdString.Length;
+                for (int i = 0; i < leadingZeros; i++)
+                {
+                    newIdString = "0" + newIdString;
+                }
+                newIdString = "UI" + newIdString;
+                return Ok(newIdString);
+            }
+            catch (FormatException e)
+            {
+                return BadRequest();
+            }
+
+        }
+
         // GET: AllCafes
+        [EnableCors("Policy1")]
         [HttpGet(Name = "GetAllCafes")]
         public async Task<ActionResult<IEnumerable<Cafe>>> GetAllCafes()
         {
             return await _context.Cafes.ToListAsync();
         }
 
-        // GET: CafeById 
+        // GET: CafeById
+        [EnableCors("Policy1")]
         [HttpGet(Name = "GetCafeById")]
         public async Task<ActionResult<Cafe>> GetCafeById(string id)
         {
@@ -40,6 +100,7 @@ namespace CafeApp.Controllers
         }
 
         // GET: Cafes and Num of Employees By Location
+        [EnableCors("Policy1")]
         [HttpGet(Name = "GetCafeWithNumEmployeesByLocation")]
         public async Task<ActionResult<CafeWithNumEmployeesDTO>> GetCafeWithNumEmployeesByLocation(string? location)
         {
@@ -71,6 +132,7 @@ namespace CafeApp.Controllers
         }
 
         // GET: EmployeeById
+        [EnableCors("Policy1")]
         [HttpGet(Name = "GetEmployeeById")]
         public async Task<ActionResult<Employee>> GetEmployeeById(string id)
         {
@@ -84,6 +146,7 @@ namespace CafeApp.Controllers
         }
 
         // GET: Employees and Num of Days worked By Cafe
+        [EnableCors("Policy1")]
         [HttpGet(Name = "GetEmployeesWithNumDaysWorkedByCafe")]
         public async Task<ActionResult<EmployeeWithNumDaysWorked>> GetEmployeesWithNumDaysWorkedByCafe(string? cafeId)
         {
@@ -91,9 +154,9 @@ namespace CafeApp.Controllers
             {
                 var query = FormattableStringFactory.Create(@"SELECT e.ID AS Id, e.NAME AS Name, 
                             e.EMAIL AS EMailAddress, e.PHONE AS PhoneNumber, e.GENDER AS Gender, 
-                            IFNULL(DATEDIFF(NOW(), em.START_DATE), 0) AS NumDaysWorked, c.NAME AS Cafe
+                            IFNULL(DATEDIFF(NOW(), em.START_DATE), 0) AS NumDaysWorked, c.NAME AS Cafe, c.ID AS CafeId
                             FROM Employees e
-                            LEFT JOIN Employments em ON e.ID = em.EMPLOYEE_ID
+                            LEFT JOIN Employments em ON e.ID = em.EMPLOYEE_ID AND em.END_DATE IS NULL
                             LEFT JOIN Cafes c ON c.ID = em.CAFE_ID
                             ORDER BY DATEDIFF(NOW(), em.START_DATE) DESC");
                 var result1 = await _context.Database.SqlQuery<EmployeeWithNumDaysWorked>(query).ToListAsync();
@@ -119,7 +182,8 @@ namespace CafeApp.Controllers
                                                 PhoneNumber = e.PhoneNumber,
                                                 Gender = e.Gender,
                                                 StartDate = em.StartDate,
-                                                CafeName = c.Name
+                                                CafeName = c.Name,
+                                                CafeId = c.Id
                                             })
                                             .ToListAsync();
 
@@ -132,18 +196,18 @@ namespace CafeApp.Controllers
                     PhoneNumber = x.PhoneNumber,
                     Gender = x.Gender,
                     NumDaysWorked = x.StartDate != null ? (int)(DateTime.Now - x.StartDate).TotalDays : 0,
-                    Cafe = x.CafeName
+                    Cafe = x.CafeName,
+                    CafeId = x.CafeId
                 })
                 .OrderByDescending(x => x.NumDaysWorked)
                 .ToList();
 
             return Ok(result);
             
-
-            
         }
 
-        // POST: Cafes/Create/1
+        // POST: CreateCafes
+        [EnableCors("Policy1")]
         [HttpPost(Name = "CreateCafe")]
         public async Task<ActionResult<Cafe>> CreateCafe([FromBody] Cafe cafe)
         {
@@ -173,7 +237,24 @@ namespace CafeApp.Controllers
             return Ok(cafe);
         }
 
-        // DELETE: Cafe (Delete cafe and all employees)
+        // POST: UpdateCafe POST
+        [EnableCors("Policy1")]
+        [HttpPost(Name = "UpdateCafePOST")]
+        public async Task<ActionResult<Cafe>> UpdateCafePOST(string id, [FromBody] Cafe updatedCafe)
+        {
+            var cafe = await _context.Cafes.FindAsync(id);
+
+            if (cafe == null) { return NotFound(); }
+
+            cafe.Name = updatedCafe.Name;
+            cafe.Description = updatedCafe.Description;
+            cafe.Location = updatedCafe.Location;
+
+            await _context.SaveChangesAsync();
+            return Ok(cafe);
+        }
+
+        // DELETE: Cafe (Delete cafe)
         [HttpDelete(Name = "DeleteCafe")]
         public async Task<ActionResult> DeleteCafe(string id)
         {
@@ -184,7 +265,20 @@ namespace CafeApp.Controllers
             return Ok();
         }
 
+        // DELETE: Cafe POST
+        [EnableCors("Policy1")]
+        [HttpPost(Name = "DeleteCafePOST")]
+        public async Task<ActionResult> DeleteCafePOST(string id)
+        {
+            var affectedRows = await _context.Cafes.Where(c => c.Id == id).ExecuteDeleteAsync();
+
+            if (affectedRows == 0) { return NotFound(); }
+
+            return Ok();
+        }
+
         // POST: CreateEmployee
+        [EnableCors("Policy1")]
         [HttpPost(Name = "CreateEmployee")]
         public async Task<ActionResult<Employee>> CreateEmployee([FromBody] Employee employee)
         {
@@ -239,6 +333,25 @@ namespace CafeApp.Controllers
             return Ok(employee);
         }
 
+        // POST: UpdateEmployee
+        [EnableCors("Policy1")]
+        [HttpPost(Name = "UpdateEmployeePOST")]
+        public async Task<ActionResult<Employee>> UpdateEmployeePOST(string id, [FromBody] Employee updatedEmployee)
+        {
+            var employee = await _context.Employees.FindAsync(id);
+
+            if (employee == null) { return NotFound(); }
+            ;
+
+            employee.Name = updatedEmployee.Name;
+            employee.EMailAddress = updatedEmployee.EMailAddress;
+            employee.PhoneNumber = updatedEmployee.PhoneNumber;
+            employee.Gender = updatedEmployee.Gender;
+
+            await _context.SaveChangesAsync();
+            return Ok(employee);
+        }
+
         // DELETE: Employee (Delete employee)
         [HttpDelete(Name = "DeleteEmployee")]
         public async Task<ActionResult> DeleteEmployee(string id)
@@ -250,12 +363,38 @@ namespace CafeApp.Controllers
             return Ok();
         }
 
+        // POST: DeleteEmployeePOST (Delete employee)
+        [EnableCors("Policy1")]
+        [HttpPost(Name = "DeleteEmployeePOST")]
+        public async Task<ActionResult> DeleteEmployeePOST(string id)
+        {
+            var affectedRows = await _context.Employees.Where(c => c.Id == id).ExecuteDeleteAsync();
+
+            if (affectedRows == 0) { return NotFound(); }
+
+            return Ok();
+        }
 
         // GET: EmploymentForEmployeeId
         [HttpGet(Name = "GetEmploymentForEmployeeId")]
         public async Task<ActionResult<IEnumerable<Employment>>> GetEmploymentForEmployeeId(string id)
         {
             return await _context.Employments.Where(e => e.EmployeeId == id).ToArrayAsync();
+        }
+
+        // GET: EmplymentAndCafeForEmployeeId
+        [EnableCors("Policy1")]
+        [HttpGet(Name = "EmplymentAndCafeForEmployeeId")]
+        public async Task<ActionResult<IEnumerable<EmploymentWithCafeNameDTO>>> EmplymentAndCafeForEmployeeId(string id)
+        {
+            var query = FormattableStringFactory.Create(@"SELECT em.EMPLOYEE_ID AS EmployeeId, em.CAFE_ID AS CafeId, c.NAME AS CafeName, em.START_DATE AS StartDate, em.END_DATE AS EndDate
+                                                            FROM Employments em
+                                                            LEFT JOIN Cafes c ON c.ID = em.CAFE_ID
+                                                            WHERE em.EMPLOYEE_ID = {0}
+                                                            ORDER BY em.END_DATE", id);
+
+            var result = await _context.Database.SqlQuery<EmploymentWithCafeNameDTO>(query).ToListAsync();
+            return Ok(result);
         }
 
         // GET: CurrentEmploymentForCafeId
@@ -293,6 +432,49 @@ namespace CafeApp.Controllers
 
             return Ok(currentEmployment);
         }
+
+        // POST: HireEmployeeForCafe
+        [EnableCors("Policy1")]
+        [HttpPost(Name = "HireEmployeeForCafe")]
+        public async Task<ActionResult<string>> HireEmployeeForCafe(string employeeId, string cafeId)
+        {
+            var currentEmployment = _context.Employments.Where(e => e.EmployeeId == employeeId && e.EndDate == null).FirstOrDefault();
+
+            if(currentEmployment != null)
+            {
+                return BadRequest("You cannot hire someone who is already hired.");
+            }
+
+            Employment newEmployment = new Employment();
+            newEmployment.EmployeeId = employeeId;
+            newEmployment.CafeId = cafeId;
+            newEmployment.StartDate = DateTime.Now;
+
+            _context.Employments.Add(newEmployment);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+
+        }
+
+        // POST: FireEmployeeFromCafe
+        [EnableCors("Policy1")]
+        [HttpPost(Name = "FireEmployeeFromCafe")]
+        public async Task<ActionResult<string>> FireEmployeeFromCafe(string employeeId, string cafeId)
+        {
+            var currentEmployment = _context.Employments.Where(e => e.EmployeeId == employeeId && e.CafeId == cafeId && e.EndDate == null).FirstOrDefault();
+
+            if (currentEmployment == null)
+            {
+                return BadRequest("You cannot fire someone who is unemployed.");
+            }
+
+            currentEmployment.EndDate = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
 
 
         private bool CafeExists(string id)
