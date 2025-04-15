@@ -4,8 +4,8 @@
 The MySQL database is hosted on Clever Cloud.
 
 There are 3 tables
- - Cafes [ID, NAME, DESCRIPTION, LOCATION]
- - Employees [ID, NAME, EMAIL, PHONE, GENDER]
+ - Cafes [ID(pk), NAME, DESCRIPTION, LOCATION]
+ - Employees [ID(pk), NAME, EMAIL, PHONE, GENDER]
  - Employments [CAFE_ID, EMPLOYEE_ID, START_DATE, END_DATE]
 
 The Employments table is meant to keep a record of all employment history.
@@ -24,10 +24,15 @@ The react app can be run with "npm run dev".
 
 (the project has not been tested for production due to time constraints)
 
-## Considerations
-CORS issues were encountered but mostly mitigated by adding a policy to allow origin "http://localhost:5173"
+In the Employees Page, clicking on the cafe button of each row displays that employee's employment history.
 
-And also using only GET or POST methods .
+This is where they can be fired or hired.
+
+## Considerations
+NOTE: The database is hosted on a free tier of Clever Cloud and is only allowed 5 concurrent connections.
+
+
+CORS issues were encountered but mostly mitigated by adding a policy to allow origin "http://localhost:5173", and also using only GET or POST methods on the front end.
 
 
 In hindsight, the database structure was overcomplicated for the scenario.
@@ -48,7 +53,7 @@ So deleting the top-most row of a table, means that the next row created will ta
 A possible mitigation would be to implement an ID tracking table that increments everytime a new row is created.
 
 
-The antd toast message doesn't seem to be working for this project.
+The antd toast message doesn't seem to be working for this project for some reason.
 
 ## Conclusion
 Many of these frameworks were new to me, so hopefully I was able to implement the best practices.
